@@ -1,0 +1,486 @@
+/* =============================================
+   CINE PERSONAL — style.css
+   Paleta: Blanco #FFFFFF · Crema #F5F3EE · Verde salvia #64886E
+   Tipografía: Playfair Display (display) · DM Sans (cuerpo)
+   Tamaños de texto permitidos: 20px · 26px · 36px
+   ============================================= */
+
+/* ---- Variables globales ---- */
+:root {
+  --verde:       #64886E;
+  --verde-claro: #EEF4F0;
+  --verde-borde: #C8D8CB;
+  --verde-hover: #4f6e58;
+  --blanco:      #FFFFFF;
+  --crema:       #F5F3EE;
+  --texto:       #2A2A2A;
+  --texto-suave: #7A9A80;
+  --radio:       14px;
+  --sombra:      0 6px 28px rgba(100, 136, 110, 0.15);
+  --transicion:  0.22s ease;
+}
+
+/* ---- Reset base ---- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--crema);
+  color: var(--texto);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Utilidad: oculto ---- */
+.oculto {
+  display: none !important;
+}
+
+/* =============================================
+   HEADER
+   ============================================= */
+.site-header {
+  background: var(--blanco);
+  border-bottom: 3px solid var(--verde);
+  padding: 2rem 3rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Logo */
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--texto);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.logo span {
+  color: var(--verde);
+}
+
+/* Buscador */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--crema);
+  border: 1.5px solid var(--verde-borde);
+  border-radius: 10px;
+  padding: 0.6rem 1.1rem;
+  flex: 1;
+  max-width: 340px;
+  transition: border-color var(--transicion);
+}
+
+.search-box:focus-within {
+  border-color: var(--verde);
+}
+
+.search-box svg {
+  color: var(--verde);
+  flex-shrink: 0;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 20px;
+  color: var(--texto);
+  width: 100%;
+  outline: none;
+}
+
+.search-box input::placeholder {
+  color: var(--texto-suave);
+}
+
+/* Badge Drive */
+.drive-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--verde-claro);
+  border: 1.5px solid var(--verde-borde);
+  border-radius: 10px;
+  padding: 0.55rem 1.1rem;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--verde);
+  white-space: nowrap;
+}
+
+/* =============================================
+   MAIN
+   ============================================= */
+.site-main {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ---- Estados (cargando / vacío / error) ---- */
+.estado-mensaje {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  padding: 5rem 2rem;
+  color: var(--texto-suave);
+  font-size: 20px;
+  text-align: center;
+}
+
+/* Spinner de carga */
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--verde-borde);
+  border-top-color: var(--verde);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Sección colección ---- */
+.coleccion {
+  display: block;
+}
+
+.seccion-titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--texto);
+  margin-bottom: 1.8rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--verde-borde);
+}
+
+/* =============================================
+   GRID DE PELÍCULAS
+   ============================================= */
+.grid-peliculas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.4rem;
+}
+
+/* ---- Tarjeta ---- */
+.tarjeta {
+  background: var(--blanco);
+  border-radius: var(--radio);
+  border: 1.5px solid var(--verde-borde);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transicion), box-shadow var(--transicion);
+  animation: aparecer 0.35s ease both;
+}
+
+.tarjeta:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--sombra);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Póster */
+.tarjeta-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: var(--verde-claro);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ícono central del póster */
+.poster-icono {
+  width: 56px;
+  height: 56px;
+  color: var(--verde);
+  opacity: 0.55;
+}
+
+.poster-tipo {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--texto-suave);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Botón play (aparece al hacer hover) */
+.poster-play {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  width: 44px;
+  height: 44px;
+  background: var(--verde);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity var(--transicion), transform var(--transicion);
+}
+
+.tarjeta:hover .poster-play {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.poster-play svg {
+  color: var(--blanco);
+  width: 20px;
+  height: 20px;
+  margin-left: 2px; /* centrado óptico del triángulo */
+}
+
+/* Info de la tarjeta */
+.tarjeta-info {
+  padding: 0.9rem 1rem;
+  border-top: 1px solid var(--verde-borde);
+}
+
+.tarjeta-titulo {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tarjeta-meta {
+  font-size: 20px;
+  color: var(--texto-suave);
+  margin-top: 4px;
+}
+
+/* =============================================
+   MODAL REPRODUCTOR
+   ============================================= */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 35, 25, 0.82);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+
+.modal-contenido {
+  position: relative;
+  z-index: 201;
+  background: var(--texto);
+  border-radius: 18px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 900px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  animation: modal-entrar 0.28s ease;
+}
+
+@keyframes modal-entrar {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.6rem;
+  background: #1a2e1f;
+}
+
+.modal-titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--blanco);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-cerrar {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--texto-suave);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color var(--transicion), background var(--transicion);
+  flex-shrink: 0;
+}
+
+.modal-cerrar:hover {
+  color: var(--blanco);
+  background: rgba(255,255,255,0.08);
+}
+
+/* El reproductor Plyr ocupa todo el ancho */
+.modal-contenido video,
+.modal-contenido .plyr {
+  width: 100%;
+  display: block;
+}
+
+/* ---- Personalización de Plyr con la paleta verde salvia ---- */
+.plyr--video .plyr__control--overlaid {
+  background: var(--verde);
+}
+
+.plyr--video .plyr__control--overlaid:hover {
+  background: var(--verde-hover);
+}
+
+.plyr__control.plyr__tab-focus,
+.plyr__control:hover,
+.plyr__control[aria-expanded=true] {
+  background: var(--verde);
+}
+
+.plyr--full-ui input[type=range] {
+  color: var(--verde);
+}
+
+.plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true]::before {
+  background: var(--verde);
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+.site-footer {
+  background: var(--blanco);
+  border-top: 2px solid var(--verde-borde);
+  padding: 2rem 3rem;
+  text-align: center;
+}
+
+.footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.footer-texto {
+  font-size: 26px;
+  color: var(--texto-suave);
+}
+
+.footer-texto span {
+  color: var(--verde);
+  font-weight: 500;
+}
+
+/* =============================================
+   RESPONSIVO
+   ============================================= */
+@media (max-width: 768px) {
+  .site-header {
+    padding: 1.4rem 1.5rem;
+  }
+
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .search-box {
+    max-width: 100%;
+    order: 3;
+    flex: 1 1 100%;
+  }
+
+  .drive-badge {
+    font-size: 20px;
+  }
+
+  .logo {
+    font-size: 26px;
+  }
+
+  .site-main {
+    padding: 1.5rem;
+  }
+
+  .seccion-titulo {
+    font-size: 26px;
+  }
+
+  .grid-peliculas {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+
+  .site-footer {
+    padding: 1.4rem 1.5rem;
+  }
+
+  .footer-texto {
+    font-size: 20px;
+  }
+}
