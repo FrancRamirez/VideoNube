@@ -32,61 +32,24 @@ const API_BASE = 'https://www.googleapis.com/drive/v3/files';
 /* --------------------------------------------------
    REFERENCIAS AL DOM
    -------------------------------------------------- */
-const elCargando   = document.getElementById('estado-cargando');
-const elVacio      = document.getElementById('estado-vacio');
-const elError      = document.getElementById('estado-error');
-const elTextoError = document.getElementById('texto-error');
-const elColeccion  = document.getElementById('coleccion');
-const elGrid       = document.getElementById('grid-peliculas');
-const elBuscador   = document.getElementById('buscador');
+const elCargando    = document.getElementById('estado-cargando');
+const elVacio       = document.getElementById('estado-vacio');
+const elError       = document.getElementById('estado-error');
+const elTextoError  = document.getElementById('texto-error');
+const elColeccion   = document.getElementById('coleccion');
+const elGrid        = document.getElementById('grid-peliculas');
+const elBuscador    = document.getElementById('buscador');
 
-const elModal      = document.getElementById('modal-reproductor');
-const elOverlay    = document.getElementById('modal-overlay');
-const elCerrar     = document.getElementById('modal-cerrar');
-const elModalTitulo= document.getElementById('modal-titulo');
-const elVideoSrc   = document.getElementById('video-src');
-const elVideo      = document.getElementById('reproductor');
-
-/* --------------------------------------------------
-   INSTANCIA DE PLYR (reproductor de video)
-   Opciones de configuración disponibles en:
-   https://github.com/sampotts/plyr#options
-   -------------------------------------------------- */
-const reproductor = new Plyr('#reproductor', {
-  controls: [
-    'play-large',
-    'play',
-    'progress',
-    'current-time',
-    'duration',
-    'mute',
-    'volume',
-    'captions',
-    'settings',
-    'pip',
-    'fullscreen',
-  ],
-  settings: ['quality', 'speed'],
-  speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-  keyboard: { focused: true, global: true },
-  tooltips: { controls: true, seek: true },
-  i18n: {
-    play:            'Reproducir',
-    pause:           'Pausar',
-    mute:            'Silenciar',
-    unmute:          'Activar sonido',
-    enterFullscreen: 'Pantalla completa',
-    exitFullscreen:  'Salir de pantalla completa',
-    settings:        'Configuración',
-    speed:           'Velocidad',
-    normal:          'Normal',
-  },
-});
+const elModal       = document.getElementById('modal-reproductor');
+const elOverlay     = document.getElementById('modal-overlay');
+const elCerrar      = document.getElementById('modal-cerrar');
+const elModalTitulo = document.getElementById('modal-titulo');
+const elIframe      = document.getElementById('reproductor-iframe');
 
 /* --------------------------------------------------
    VARIABLES DE ESTADO
    -------------------------------------------------- */
-let todasLasPeliculas = []; // Lista completa cargada desde Drive
+let todasLasPeliculas = [];
 
 /* =============================================
    FUNCIÓN PRINCIPAL: cargar archivos de Drive
@@ -95,18 +58,14 @@ async function cargarPeliculas() {
   mostrarEstado('cargando');
 
   try {
-    /* Construimos la URL de la API:
-       - q: buscamos archivos dentro de la carpeta y que no estén en la papelera
-       - fields: solo pedimos los campos que necesitamos (ahorra datos)
-       - pageSize: máximo de archivos por solicitud (ajustar si tienes más de 100)
-       - key: nuestra API Key */
-    const campos   = 'files(id,name,mimeType,size)';
+    /* Pedimos también thumbnailLink para la previa del video.
+       Drive genera thumbnails automáticamente para videos. */
+    const campos   = 'files(id,name,mimeType,size,thumbnailLink)';
     const consulta = encodeURIComponent(`'${FOLDER_ID}' in parents and trashed = false`);
     const url      = `${API_BASE}?q=${consulta}&fields=${campos}&pageSize=100&key=${API_KEY}`;
 
     const respuesta = await fetch(url);
 
-    /* Si la API devuelve error (clave inválida, sin permisos, etc.) */
     if (!respuesta.ok) {
       const datos = await respuesta.json();
       const msg   = datos?.error?.message || `Error HTTP ${respuesta.status}`;
@@ -116,7 +75,6 @@ async function cargarPeliculas() {
     const datos    = await respuesta.json();
     const archivos = datos.files || [];
 
-    /* Filtramos solo los archivos de video */
     todasLasPeliculas = archivos.filter(archivo => esVideo(archivo));
 
     if (todasLasPeliculas.length === 0) {
@@ -136,13 +94,9 @@ async function cargarPeliculas() {
 
 /* =============================================
    ¿Es un archivo de video?
-   Verifica por mimeType y por extensión.
    ============================================= */
 function esVideo(archivo) {
-  /* Google Drive asigna mimeType de video a archivos conocidos */
   if (archivo.mimeType && archivo.mimeType.startsWith('video/')) return true;
-
-  /* Verificamos la extensión del nombre como respaldo */
   const extension = archivo.name.split('.').pop().toLowerCase();
   return TIPOS_VIDEO.includes(extension);
 }
@@ -151,9 +105,7 @@ function esVideo(archivo) {
    RENDERIZAR GRID de tarjetas
    ============================================= */
 function renderizarGrid(peliculas) {
-  /* Limpiamos el grid antes de volver a renderizar (por búsqueda) */
   elGrid.innerHTML = '';
-
   peliculas.forEach((pelicula, indice) => {
     const tarjeta = crearTarjeta(pelicula, indice);
     elGrid.appendChild(tarjeta);
@@ -164,59 +116,63 @@ function renderizarGrid(peliculas) {
    CREAR una tarjeta de película
    ============================================= */
 function crearTarjeta(pelicula, indice) {
-  /* El nombre limpio quita la extensión del archivo */
   const nombreLimpio = pelicula.name.replace(/\.[^/.]+$/, '');
-
-  /* Formato legible del tamaño */
   const tamano = pelicula.size ? formatearTamano(Number(pelicula.size)) : 'Video';
+
+  /* Thumbnail: Drive genera previews automáticamente.
+     Pedimos la versión grande (s800) en lugar de la pequeña (s220).
+     Si no existe, mostramos el ícono como fallback. */
+  const tieneThumbnail = !!pelicula.thumbnailLink;
+  const thumbUrl = tieneThumbnail
+    ? pelicula.thumbnailLink.replace('=s220', '=s800')
+    : null;
 
   const tarjeta = document.createElement('article');
   tarjeta.className = 'tarjeta';
-
-  /* Retraso escalonado para la animación de entrada */
   tarjeta.style.animationDelay = `${indice * 0.06}s`;
-
   tarjeta.setAttribute('role', 'button');
   tarjeta.setAttribute('tabindex', '0');
   tarjeta.setAttribute('aria-label', `Reproducir ${nombreLimpio}`);
 
   tarjeta.innerHTML = `
     <div class="tarjeta-poster">
-      <!-- Ícono de película -->
-      <svg class="poster-icono" xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-        aria-hidden="true">
-        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
-        <line x1="7" y1="2" x2="7" y2="22"/>
-        <line x1="17" y1="2" x2="17" y2="22"/>
-        <line x1="2" y1="12" x2="22" y2="12"/>
-        <line x1="2" y1="7" x2="7" y2="7"/>
-        <line x1="2" y1="17" x2="7" y2="17"/>
-        <line x1="17" y1="7" x2="22" y2="7"/>
-        <line x1="17" y1="17" x2="22" y2="17"/>
-      </svg>
-      <span class="poster-tipo">Video</span>
 
-      <!-- Botón play al hacer hover -->
+      ${tieneThumbnail
+        ? `<img class="poster-thumb" src="${thumbUrl}" alt="${nombreLimpio}" loading="lazy" />`
+        : `<svg class="poster-icono" xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+              aria-hidden="true">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+              <line x1="7" y1="2" x2="7" y2="22"/>
+              <line x1="17" y1="2" x2="17" y2="22"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <line x1="2" y1="7" x2="7" y2="7"/>
+              <line x1="2" y1="17" x2="7" y2="17"/>
+              <line x1="17" y1="7" x2="22" y2="7"/>
+              <line x1="17" y1="17" x2="22" y2="17"/>
+            </svg>
+            <span class="poster-tipo">Video</span>`
+      }
+
+      <!-- Overlay con título completo y peso, superpuesto en la imagen -->
+      <div class="poster-overlay">
+        <p class="overlay-titulo">${nombreLimpio}</p>
+        <p class="overlay-meta">${tamano}</p>
+      </div>
+
+      <!-- Botón play visible al hacer hover -->
       <div class="poster-play" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
           fill="currentColor" aria-hidden="true">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
       </div>
-    </div>
 
-    <div class="tarjeta-info">
-      <p class="tarjeta-titulo" title="${nombreLimpio}">${nombreLimpio}</p>
-      <p class="tarjeta-meta">${tamano}</p>
     </div>
   `;
 
-  /* Evento: clic con mouse */
   tarjeta.addEventListener('click', () => abrirReproductor(pelicula.id, nombreLimpio));
-
-  /* Evento: teclado (Enter o Espacio) para accesibilidad */
   tarjeta.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -229,49 +185,33 @@ function crearTarjeta(pelicula, indice) {
 
 /* =============================================
    ABRIR REPRODUCTOR
-   Construye la URL de streaming de Google Drive
+   Usa el visor embebido de Google Drive via iframe.
+   Compatible con MP4, MKV, AVI, MOV, WebM y más.
    ============================================= */
 function abrirReproductor(fileId, titulo) {
-  /* URL de streaming directo de Google Drive.
-     Esta URL funciona para archivos públicos. */
-  const urlVideo = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
-
+  const urlEmbed = `https://drive.google.com/file/d/${fileId}/preview`;
   elModalTitulo.textContent = titulo;
-
-  /* Actualizamos la fuente del video y recargamos Plyr */
-  reproductor.source = {
-    type: 'video',
-    sources: [
-      {
-        src: urlVideo,
-        type: 'video/mp4',
-      },
-    ],
-  };
-
-  /* Mostramos el modal */
+  elIframe.src = urlEmbed;
   elModal.classList.remove('oculto');
-  document.body.style.overflow = 'hidden'; /* Bloqueamos scroll del fondo */
+  document.body.style.overflow = 'hidden';
 }
 
 /* =============================================
    CERRAR REPRODUCTOR
    ============================================= */
 function cerrarReproductor() {
-  reproductor.pause();
+  elIframe.src = '';
   elModal.classList.add('oculto');
-  document.body.style.overflow = ''; /* Restauramos scroll */
+  document.body.style.overflow = '';
 }
 
 /* =============================================
    BÚSQUEDA EN TIEMPO REAL
-   Filtra las tarjetas según lo que escribe el usuario.
    ============================================= */
 elBuscador.addEventListener('input', () => {
   const termino = elBuscador.value.trim().toLowerCase();
 
   if (termino === '') {
-    /* Si buscador está vacío, mostramos todo */
     renderizarGrid(todasLasPeliculas);
     return;
   }
@@ -282,7 +222,6 @@ elBuscador.addEventListener('input', () => {
 
   renderizarGrid(filtradas);
 
-  /* Si no hay resultados con ese filtro */
   if (filtradas.length === 0) {
     elGrid.innerHTML = `
       <p style="color: var(--texto-suave); font-size: 20px; padding: 2rem 0;">
@@ -295,14 +234,8 @@ elBuscador.addEventListener('input', () => {
 /* =============================================
    EVENTOS DEL MODAL
    ============================================= */
-
-/* Cerrar con el botón X */
 elCerrar.addEventListener('click', cerrarReproductor);
-
-/* Cerrar al hacer clic en el overlay oscuro */
 elOverlay.addEventListener('click', cerrarReproductor);
-
-/* Cerrar con la tecla Escape */
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !elModal.classList.contains('oculto')) {
     cerrarReproductor();
@@ -311,7 +244,6 @@ document.addEventListener('keydown', (e) => {
 
 /* =============================================
    FUNCIÓN: Mostrar estado de la interfaz
-   estados posibles: 'cargando' | 'vacio' | 'error' | 'coleccion'
    ============================================= */
 function mostrarEstado(estado) {
   elCargando.classList.add('oculto');
@@ -320,25 +252,24 @@ function mostrarEstado(estado) {
   elColeccion.classList.add('oculto');
 
   switch (estado) {
-    case 'cargando':   elCargando.classList.remove('oculto');  break;
-    case 'vacio':      elVacio.classList.remove('oculto');     break;
-    case 'error':      elError.classList.remove('oculto');     break;
-    case 'coleccion':  elColeccion.classList.remove('oculto'); break;
+    case 'cargando':  elCargando.classList.remove('oculto');  break;
+    case 'vacio':     elVacio.classList.remove('oculto');     break;
+    case 'error':     elError.classList.remove('oculto');     break;
+    case 'coleccion': elColeccion.classList.remove('oculto'); break;
   }
 }
 
 /* =============================================
    FUNCIÓN: Formatear tamaño de archivo
-   Convierte bytes a KB / MB / GB legible.
    ============================================= */
 function formatearTamano(bytes) {
-  if (bytes < 1024)                    return `${bytes} B`;
-  if (bytes < 1024 * 1024)             return `${Math.round(bytes / 1024)} KB`;
-  if (bytes < 1024 * 1024 * 1024)      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024)               return `${bytes} B`;
+  if (bytes < 1024 * 1024)        return `${Math.round(bytes / 1024)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 /* =============================================
-   INICIO — Ejecutamos al cargar la página
+   INICIO
    ============================================= */
 document.addEventListener('DOMContentLoaded', cargarPeliculas);

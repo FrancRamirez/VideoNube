@@ -1,5 +1,5 @@
 /* =============================================
-   CLOUDVIDEO — style.css
+   CINE PERSONAL — style.css
    Paleta: Blanco #FFFFFF · Crema #F5F3EE · Verde salvia #64886E
    Tipografía: Playfair Display (display) · DM Sans (cuerpo)
    Tamaños de texto permitidos: 20px · 26px · 36px
@@ -190,8 +190,8 @@ body {
    ============================================= */
 .grid-peliculas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.4rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.6rem;
 }
 
 /* ---- Tarjeta ---- */
@@ -224,7 +224,7 @@ body {
 /* Póster */
 .tarjeta-poster {
   width: 100%;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 16 / 9;
   background: var(--verde-claro);
   display: flex;
   flex-direction: column;
@@ -235,12 +235,24 @@ body {
   overflow: hidden;
 }
 
-/* Ícono central del póster */
+/* Thumbnail generado por Drive */
+.poster-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Ícono central del póster (fallback sin thumbnail) */
 .poster-icono {
   width: 56px;
   height: 56px;
   color: var(--verde);
   opacity: 0.55;
+  position: relative;
+  z-index: 1;
 }
 
 .poster-tipo {
@@ -249,56 +261,65 @@ body {
   color: var(--texto-suave);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+/* Overlay con título y peso superpuesto en la imagen */
+.poster-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem 1rem 0.9rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+  z-index: 2;
+}
+
+.overlay-titulo {
+  font-size: 20px;
+  font-weight: 500;
+  color: #ffffff;
+  /* Título completo en múltiples líneas */
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.overlay-meta {
+  font-size: 20px;
+  color: rgba(255,255,255,0.65);
+  margin-top: 3px;
 }
 
 /* Botón play (aparece al hacer hover) */
 .poster-play {
   position: absolute;
-  bottom: 14px;
-  right: 14px;
-  width: 44px;
-  height: 44px;
-  background: var(--verde);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  width: 52px;
+  height: 52px;
+  background: rgba(100, 136, 110, 0.9);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: scale(0.8);
   transition: opacity var(--transicion), transform var(--transicion);
+  z-index: 3;
 }
 
 .tarjeta:hover .poster-play {
   opacity: 1;
-  transform: scale(1);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .poster-play svg {
   color: var(--blanco);
-  width: 20px;
-  height: 20px;
-  margin-left: 2px; /* centrado óptico del triángulo */
-}
-
-/* Info de la tarjeta */
-.tarjeta-info {
-  padding: 0.9rem 1rem;
-  border-top: 1px solid var(--verde-borde);
-}
-
-.tarjeta-titulo {
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--texto);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tarjeta-meta {
-  font-size: 20px;
-  color: var(--texto-suave);
-  margin-top: 4px;
+  width: 22px;
+  height: 22px;
+  margin-left: 3px;
 }
 
 /* =============================================
@@ -388,27 +409,21 @@ body {
   display: block;
 }
 
-/* ---- Personalización de Plyr con la paleta verde salvia ---- */
-.plyr--video .plyr__control--overlaid {
-  background: var(--verde);
+/* ---- Contenedor iframe (proporcional 16:9) ---- */
+.iframe-contenedor {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* Proporción 16:9 */
+  background: #000;
 }
 
-.plyr--video .plyr__control--overlaid:hover {
-  background: var(--verde-hover);
-}
-
-.plyr__control.plyr__tab-focus,
-.plyr__control:hover,
-.plyr__control[aria-expanded=true] {
-  background: var(--verde);
-}
-
-.plyr--full-ui input[type=range] {
-  color: var(--verde);
-}
-
-.plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true]::before {
-  background: var(--verde);
+.iframe-contenedor iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
 
 /* =============================================
@@ -472,7 +487,7 @@ body {
   }
 
   .grid-peliculas {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
   }
 

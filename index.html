@@ -10,10 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
-  <!-- Reproductor Plyr.js (CSS) -->
-  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-
-  <!-- Estilos propios -->
+<!-- Estilos propios -->
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -31,7 +28,14 @@
         <input type="text" id="buscador" placeholder="Buscar película..." aria-label="Buscar película" />
       </div>
       <div class="drive-badge">
-        <img src="assets/icon_drive.png" alt="Google Drive" width="24" height="24" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 87.3 78" aria-hidden="true">
+          <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#64886E"/>
+          <path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5A9 9 0 000 53h27.5z" fill="#64886E" opacity=".8"/>
+          <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57.5c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.65z" fill="#64886E" opacity=".6"/>
+          <path d="M43.65 25L57.4 0H29.9z" fill="#64886E" opacity=".4"/>
+          <path d="M59.8 53H87.3L73.55 29H46.05z" fill="#64886E" opacity=".6"/>
+          <path d="M46.05 29L59.8 53l13.75-24z" fill="#64886E" opacity=".8"/>
+        </svg>
         Google Drive
       </div>
     </div>
@@ -78,11 +82,17 @@
           </svg>
         </button>
       </div>
-      <!-- Plyr reemplaza este elemento con el reproductor completo -->
-      <video id="reproductor" playsinline controls>
-        <source id="video-src" src="" type="video/mp4" />
-        Tu navegador no soporta la reproducción de video.
-      </video>
+      <!-- Reproductor embebido de Google Drive -->
+      <div class="iframe-contenedor">
+        <iframe
+          id="reproductor-iframe"
+          src=""
+          frameborder="0"
+          allowfullscreen
+          allow="autoplay; encrypted-media; fullscreen"
+          title="Reproductor de video">
+        </iframe>
+      </div>
     </div>
   </div>
 
@@ -93,8 +103,6 @@
     </div>
   </footer>
 
-  <!-- Plyr.js (reproductor) -->
-  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
   <!-- Lógica principal -->
   <script src="js/script.js"></script>
