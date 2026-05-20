@@ -452,7 +452,34 @@ body {
 }
 
 /* =============================================
-   RESPONSIVO
+   SCROLLBAR SIEMPRE VISIBLE
+   Necesario para Smart TVs que la ocultan por defecto.
+   ============================================= */
+html {
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: var(--verde-borde) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--verde-borde);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--verde);
+}
+
+/* =============================================
+   RESPONSIVO — MÓVIL (max 768px)
    ============================================= */
 @media (max-width: 768px) {
   .site-header {
@@ -498,4 +525,68 @@ body {
   .footer-texto {
     font-size: 20px;
   }
+
+  /* ---- Modal en móvil: pantalla completa ---- */
+  .modal {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-contenido {
+    border-radius: 18px 18px 0 0;
+    max-width: 100%;
+    width: 100%;
+    /* El iframe ocupa el alto disponible menos el header del modal */
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-header {
+    padding: 1rem 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .modal-titulo {
+    font-size: 20px;
+  }
+
+  /* El iframe se adapta al espacio restante */
+  .iframe-contenedor {
+    flex: 1;
+    /* En móvil usamos altura fija en lugar de padding-bottom
+       para que no desborde la pantalla */
+    padding-bottom: 0;
+    height: 56vw; /* Proporción 16:9 basada en el ancho de pantalla */
+    min-height: 200px;
+    max-height: 60vh;
+  }
+
+  /* Botón play más grande para dedos */
+  .poster-play {
+    width: 48px;
+    height: 48px;
+    /* En móvil siempre visible, sin necesidad de hover */
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
+
+/* =============================================
+   RESPONSIVO — PANTALLAS MUY PEQUEÑAS (max 420px)
+   ============================================= */
+@media (max-width: 420px) {
+  .grid-peliculas {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-contenido {
+    max-height: 95vh;
+  }
+
+  .iframe-contenedor {
+    height: 56vw;
+    max-height: 55vh;
+  }
+}
+
