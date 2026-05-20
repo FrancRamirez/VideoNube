@@ -1,5 +1,5 @@
 /* =============================================
-   CINE PERSONAL — script.js
+   CLOUDVIDEO — script.js
    Conecta con Google Drive API v3 para listar
    los archivos de la carpeta "Peliculas" y
    renderiza las tarjetas dinámicamente.
@@ -128,7 +128,7 @@ async function cargarPeliculas() {
     mostrarEstado('coleccion');
 
   } catch (error) {
-    console.error('[Cine Personal] Error al cargar Drive:', error);
+    console.error('[CloudVideo] Error al cargar Drive:', error);
     elTextoError.textContent = `Error al cargar: ${error.message}`;
     mostrarEstado('error');
   }
