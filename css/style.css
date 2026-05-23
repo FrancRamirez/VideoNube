@@ -80,43 +80,6 @@ body {
   color: var(--verde);
 }
 
-/* Buscador */
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--crema);
-  border: 1.5px solid var(--verde-borde);
-  border-radius: 10px;
-  padding: 0.6rem 1.1rem;
-  flex: 1;
-  max-width: 340px;
-  transition: border-color var(--transicion);
-}
-
-.search-box:focus-within {
-  border-color: var(--verde);
-}
-
-.search-box svg {
-  color: var(--verde);
-  flex-shrink: 0;
-}
-
-.search-box input {
-  border: none;
-  background: transparent;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 20px;
-  color: var(--texto);
-  width: 100%;
-  outline: none;
-}
-
-.search-box input::placeholder {
-  color: var(--texto-suave);
-}
-
 /* Badge Drive */
 .drive-badge {
   display: flex;
@@ -183,6 +146,74 @@ body {
   margin-bottom: 1.8rem;
   padding-bottom: 0.6rem;
   border-bottom: 2px solid var(--verde-borde);
+}
+
+/* =============================================
+   BARRA DE ESPACIO
+   ============================================= */
+.espacio-contenedor {
+  margin-bottom: 2rem;
+  padding: 1.4rem 1.8rem;
+  background: var(--blanco);
+  border: 1.5px solid var(--verde-borde);
+  border-radius: var(--radio);
+}
+
+.espacio-titulo {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--texto);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.espacio-barra-fondo {
+  position: relative;
+  width: 100%;
+  height: 52px;
+  background: #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.espacio-barra-progreso {
+  /* El ancho se calcula dinámicamente desde JS */
+  height: 100%;
+  background: var(--verde);
+  border-radius: 12px;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.8s ease;
+  flex-shrink: 0;
+}
+
+.espacio-texto-usado {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--blanco);
+  white-space: nowrap;
+  padding: 0 12px;
+}
+
+.espacio-texto-total {
+  font-size: 20px;
+  font-weight: 500;
+  color: #888;
+  white-space: nowrap;
+  padding: 0 16px;
+  margin-left: auto;
+}
+
+.espacio-detalle {
+  font-size: 20px;
+  color: var(--texto-suave);
+  margin-top: 0.6rem;
+  text-align: center;
 }
 
 /* =============================================
@@ -409,21 +440,34 @@ body {
   display: block;
 }
 
-/* ---- Contenedor iframe (proporcional 16:9) ---- */
-.iframe-contenedor {
-  position: relative;
+/* ---- Reproductor Plyr ocupa todo el ancho ---- */
+.modal-contenido video,
+.modal-contenido .plyr {
   width: 100%;
-  padding-bottom: 56.25%; /* Proporción 16:9 */
-  background: #000;
+  display: block;
 }
 
-.iframe-contenedor iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
+/* ---- Personalización de Plyr con paleta verde salvia ---- */
+.plyr--video .plyr__control--overlaid {
+  background: var(--verde);
+}
+
+.plyr--video .plyr__control--overlaid:hover {
+  background: var(--verde-hover);
+}
+
+.plyr__control.plyr__tab-focus,
+.plyr__control:hover,
+.plyr__control[aria-expanded=true] {
+  background: var(--verde);
+}
+
+.plyr--full-ui input[type=range] {
+  color: var(--verde);
+}
+
+.plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true]::before {
+  background: var(--verde);
 }
 
 /* =============================================
@@ -491,12 +535,6 @@ html {
     gap: 1rem;
   }
 
-  .search-box {
-    max-width: 100%;
-    order: 3;
-    flex: 1 1 100%;
-  }
-
   .drive-badge {
     font-size: 20px;
   }
@@ -536,7 +574,6 @@ html {
     border-radius: 18px 18px 0 0;
     max-width: 100%;
     width: 100%;
-    /* El iframe ocupa el alto disponible menos el header del modal */
     max-height: 92vh;
     display: flex;
     flex-direction: column;
@@ -551,22 +588,10 @@ html {
     font-size: 20px;
   }
 
-  /* El iframe se adapta al espacio restante */
-  .iframe-contenedor {
-    flex: 1;
-    /* En móvil usamos altura fija en lugar de padding-bottom
-       para que no desborde la pantalla */
-    padding-bottom: 0;
-    height: 56vw; /* Proporción 16:9 basada en el ancho de pantalla */
-    min-height: 200px;
-    max-height: 60vh;
-  }
-
   /* Botón play más grande para dedos */
   .poster-play {
     width: 48px;
     height: 48px;
-    /* En móvil siempre visible, sin necesidad de hover */
     opacity: 0.85;
     transform: translate(-50%, -50%) scale(1);
   }
@@ -582,11 +607,6 @@ html {
 
   .modal-contenido {
     max-height: 95vh;
-  }
-
-  .iframe-contenedor {
-    height: 56vw;
-    max-height: 55vh;
   }
 }
 
