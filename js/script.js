@@ -212,7 +212,7 @@ function crearTarjeta(pelicula, indice) {
    ABRIR REPRODUCTOR
    Recibe el índice del video en la lista.
    ============================================= */
-function abrirReproductor(indice) {
+function abrirReproductor(indice, mantenerPantallaCompleta = false) {
   indiceActual = indice;
   const pelicula     = todasLasPeliculas[indice];
   const nombreLimpio = pelicula.name.replace(/\.[^/.]+$/, '');
@@ -227,6 +227,19 @@ function abrirReproductor(indice) {
 
   elModal.classList.remove('oculto');
   document.body.style.overflow = 'hidden';
+
+  /* Cuando el video esté listo, reproducir automáticamente.
+     Si venimos de un video anterior en pantalla completa,
+     mantenemos esa pantalla completa sin interrumpir. */
+  reproductor.once('ready', () => {
+    reproductor.play();
+
+    /* Solo entramos a pantalla completa en la primera apertura manual.
+       Si ya estamos en pantalla completa (cambio automático), no hacemos nada. */
+    if (!mantenerPantallaCompleta) {
+      reproductor.fullscreen.enter();
+    }
+  });
 }
 
 /* =============================================
@@ -237,9 +250,9 @@ function abrirReproductor(indice) {
 reproductor.on('ended', () => {
   const siguiente = indiceActual + 1;
 
-  /* Si hay un video siguiente en la lista, lo reproducimos */
   if (siguiente < todasLasPeliculas.length) {
-    abrirReproductor(siguiente);
+    /* Pasamos true para mantener pantalla completa entre videos */
+    abrirReproductor(siguiente, true);
   }
   /* Si era el último, no hacemos nada — se detiene solo */
 });
@@ -253,6 +266,30 @@ function cerrarReproductor() {
   document.body.style.overflow = '';
   indiceActual = -1;
 }
+
+/* =============================================
+   OCULTAR CURSOR AUTOMÁTICAMENTE
+   Si el mouse no se mueve por 3 segundos dentro
+   del reproductor, el cursor desaparece.
+   Se reactiva al mover el mouse.
+   ============================================= */
+let temporizadorCursor = null;
+
+function ocultarCursor() {
+  document.body.classList.add('cursor-oculto');
+}
+
+function mostrarCursor() {
+  document.body.classList.remove('cursor-oculto');
+  clearTimeout(temporizadorCursor);
+  /* Solo ocultamos el cursor si el reproductor está abierto */
+  if (!elModal.classList.contains('oculto')) {
+    temporizadorCursor = setTimeout(ocultarCursor, 3000);
+  }
+}
+
+document.addEventListener('mousemove', mostrarCursor);
+document.addEventListener('mousedown', mostrarCursor);
 
 /* =============================================
    EVENTOS DEL MODAL
