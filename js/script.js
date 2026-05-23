@@ -38,7 +38,6 @@ const elModalTitulo = document.getElementById('modal-titulo');
 
 /* --------------------------------------------------
    INSTANCIA DE PLYR
-   Documentación: https://github.com/sampotts/plyr#options
    -------------------------------------------------- */
 const reproductor = new Plyr('#reproductor', {
   controls: [
@@ -54,21 +53,15 @@ const reproductor = new Plyr('#reproductor', {
     'fullscreen',
   ],
   settings: ['speed'],
-  /* Velocidades de reproducción disponibles */
   speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
   keyboard: { focused: true, global: true },
   tooltips: { controls: true, seek: true },
-  /* Forzamos calidad máxima: no permitimos degradar la resolución */
   quality: {
     default: 1080,
     options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240],
     forced: true,
     onChange: (quality) => {
-      /* Si el usuario o el sistema intenta bajar de 1080p,
-         lo revertimos a 1080 automáticamente */
-      if (quality < 1080) {
-        reproductor.quality = 1080;
-      }
+      if (quality < 1080) reproductor.quality = 1080;
     },
   },
   i18n: {
@@ -87,18 +80,24 @@ const reproductor = new Plyr('#reproductor', {
 /* --------------------------------------------------
    VARIABLES DE ESTADO
    -------------------------------------------------- */
-let todasLasPeliculas = [];
+let todasLasPeliculas = []; // Lista completa ordenada
+let indiceActual      = -1; // Índice del video en reproducción
 
 /* =============================================
    FUNCIÓN PRINCIPAL: cargar archivos de Drive
+   Ordenados por createdTime ascendente:
+   más viejo arriba, más nuevo abajo.
    ============================================= */
 async function cargarPeliculas() {
   mostrarEstado('cargando');
 
   try {
-    const campos   = 'files(id,name,mimeType,size,thumbnailLink)';
+    const campos   = 'files(id,name,mimeType,size,thumbnailLink,createdTime)';
     const consulta = encodeURIComponent(`'${FOLDER_ID}' in parents and trashed = false`);
-    const url      = `${API_BASE}?q=${consulta}&fields=${campos}&pageSize=100&key=${API_KEY}`;
+
+    /* orderBy=createdTime: el más antiguo primero (arriba en el grid),
+       el más nuevo al final (abajo en el grid) */
+    const url = `${API_BASE}?q=${consulta}&fields=${campos}&pageSize=100&orderBy=createdTime&key=${API_KEY}`;
 
     const respuesta = await fetch(url);
 
@@ -198,11 +197,11 @@ function crearTarjeta(pelicula, indice) {
     </div>
   `;
 
-  tarjeta.addEventListener('click', () => abrirReproductor(pelicula.id, nombreLimpio));
+  tarjeta.addEventListener('click', () => abrirReproductor(indice));
   tarjeta.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      abrirReproductor(pelicula.id, nombreLimpio);
+      abrirReproductor(indice);
     }
   });
 
@@ -210,14 +209,16 @@ function crearTarjeta(pelicula, indice) {
 }
 
 /* =============================================
-   ABRIR REPRODUCTOR con Plyr
-   Usamos la URL de descarga directa de Drive.
+   ABRIR REPRODUCTOR
+   Recibe el índice del video en la lista.
    ============================================= */
-function abrirReproductor(fileId, titulo) {
-  /* URL de streaming directo de Google Drive */
-  const urlVideo = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
+function abrirReproductor(indice) {
+  indiceActual = indice;
+  const pelicula     = todasLasPeliculas[indice];
+  const nombreLimpio = pelicula.name.replace(/\.[^/.]+$/, '');
+  const urlVideo     = `https://www.googleapis.com/drive/v3/files/${pelicula.id}?alt=media&key=${API_KEY}`;
 
-  elModalTitulo.textContent = titulo;
+  elModalTitulo.textContent = nombreLimpio;
 
   reproductor.source = {
     type: 'video',
@@ -229,12 +230,28 @@ function abrirReproductor(fileId, titulo) {
 }
 
 /* =============================================
+   REPRODUCCIÓN AUTOMÁTICA AL TERMINAR
+   Cuando termina un video, pasa al siguiente.
+   Si era el último, se detiene sin hacer nada.
+   ============================================= */
+reproductor.on('ended', () => {
+  const siguiente = indiceActual + 1;
+
+  /* Si hay un video siguiente en la lista, lo reproducimos */
+  if (siguiente < todasLasPeliculas.length) {
+    abrirReproductor(siguiente);
+  }
+  /* Si era el último, no hacemos nada — se detiene solo */
+});
+
+/* =============================================
    CERRAR REPRODUCTOR
    ============================================= */
 function cerrarReproductor() {
   reproductor.pause();
   elModal.classList.add('oculto');
   document.body.style.overflow = '';
+  indiceActual = -1;
 }
 
 /* =============================================
@@ -247,6 +264,25 @@ document.addEventListener('keydown', (e) => {
     cerrarReproductor();
   }
 });
+
+/* =============================================
+   BARRA DE ESPACIO DISPONIBLE
+   ============================================= */
+function actualizarBarraEspacio(peliculas) {
+  const TOTAL_BYTES   = 15 * 1024 * 1024 * 1024;
+  const usadoBytes    = peliculas.reduce((acc, p) => acc + (Number(p.size) || 0), 0);
+  const porcentaje    = Math.min((usadoBytes / TOTAL_BYTES) * 100, 100);
+  const usadoTexto    = formatearTamano(usadoBytes);
+  const disponible    = formatearTamano(Math.max(TOTAL_BYTES - usadoBytes, 0));
+
+  const barraProgreso = document.getElementById('espacio-usado');
+  const textoUsado    = document.getElementById('espacio-usado-texto');
+  const textoDetalle  = document.getElementById('espacio-detalle');
+
+  barraProgreso.style.width    = `${porcentaje}%`;
+  textoUsado.textContent       = usadoTexto;
+  textoDetalle.textContent     = `${disponible} disponibles de 15 GB`;
+}
 
 /* =============================================
    MOSTRAR ESTADO
@@ -263,35 +299,6 @@ function mostrarEstado(estado) {
     case 'error':     elError.classList.remove('oculto');     break;
     case 'coleccion': elColeccion.classList.remove('oculto'); break;
   }
-}
-
-/* =============================================
-   BARRA DE ESPACIO DISPONIBLE
-   Calcula el peso total de los videos de la carpeta
-   sobre los 15 GB totales de Google Drive gratuito.
-   ============================================= */
-function actualizarBarraEspacio(peliculas) {
-  /* Límite total de Google Drive gratuito en bytes */
-  const TOTAL_BYTES = 15 * 1024 * 1024 * 1024; // 15 GB
-
-  /* Sumamos el tamaño de todos los videos */
-  const usadoBytes = peliculas.reduce((acc, p) => acc + (Number(p.size) || 0), 0);
-
-  /* Porcentaje ocupado (máximo 100%) */
-  const porcentaje = Math.min((usadoBytes / TOTAL_BYTES) * 100, 100);
-
-  /* Textos legibles */
-  const usadoTexto    = formatearTamano(usadoBytes);
-  const disponible    = formatearTamano(Math.max(TOTAL_BYTES - usadoBytes, 0));
-
-  /* Actualizamos el DOM */
-  const barraProgreso = document.getElementById('espacio-usado');
-  const textoUsado    = document.getElementById('espacio-usado-texto');
-  const textoDetalle  = document.getElementById('espacio-detalle');
-
-  barraProgreso.style.width = `${porcentaje}%`;
-  textoUsado.textContent    = usadoTexto;
-  textoDetalle.textContent  = `${disponible} disponibles de 15 GB`;
 }
 
 /* =============================================
