@@ -165,6 +165,14 @@ function crearTarjeta(pelicula, indice) {
   tarjeta.setAttribute('role', 'button');
   tarjeta.setAttribute('tabindex', '0');
   tarjeta.setAttribute('aria-label', `Reproducir ${nombreLimpio}`);
+  tarjeta.setAttribute('data-id', pelicula.id);
+
+  /* Verificamos si hay progreso guardado para este video */
+  const progreso   = obtenerProgreso(pelicula.id);
+  const tieneProgreso = progreso && progreso.duracion > 0;
+  const porcentaje = tieneProgreso
+    ? Math.min((progreso.tiempo / progreso.duracion) * 100, 100)
+    : 0;
 
   tarjeta.innerHTML = `
     <div class="tarjeta-poster">
@@ -195,6 +203,11 @@ function crearTarjeta(pelicula, indice) {
         </svg>
       </div>
     </div>
+
+    <!-- Barra de progreso: visible solo si hay progreso guardado -->
+    <div class="progreso-contenedor ${tieneProgreso ? '' : 'oculto'}">
+      <div class="progreso-barra" style="width: ${porcentaje}%"></div>
+    </div>
   `;
 
   tarjeta.addEventListener('click', () => abrirReproductor(indice));
@@ -206,6 +219,63 @@ function crearTarjeta(pelicula, indice) {
   });
 
   return tarjeta;
+}
+
+/* =============================================
+   PROGRESO DE VIDEOS — localStorage
+   Clave: "cv_progreso_{fileId}"
+   Valor: { tiempo: segundos, duracion: segundos }
+   ============================================= */
+
+/* Guarda el progreso del video actual cada 5 segundos */
+const INTERVALO_GUARDADO = 5000;
+let intervaloProgreso = null;
+
+function guardarProgreso() {
+  const pelicula = todasLasPeliculas[indiceActual];
+  if (!pelicula) return;
+
+  const tiempo   = reproductor.currentTime;
+  const duracion = reproductor.duration;
+
+  /* No guardamos si aún no hay duración válida */
+  if (!duracion || duracion === 0) return;
+
+  const datos = { tiempo, duracion };
+  localStorage.setItem(`cv_progreso_${pelicula.id}`, JSON.stringify(datos));
+
+  /* Actualizamos la barra de progreso en la tarjeta visualmente */
+  actualizarBarraTarjeta(pelicula.id, tiempo, duracion);
+}
+
+function obtenerProgreso(fileId) {
+  try {
+    const raw = localStorage.getItem(`cv_progreso_${fileId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function iniciarGuardadoProgreso() {
+  detenerGuardadoProgreso();
+  intervaloProgreso = setInterval(guardarProgreso, INTERVALO_GUARDADO);
+}
+
+function detenerGuardadoProgreso() {
+  if (intervaloProgreso) {
+    clearInterval(intervaloProgreso);
+    intervaloProgreso = null;
+  }
+}
+
+/* Actualiza la barra de progreso visible en la tarjeta */
+function actualizarBarraTarjeta(fileId, tiempo, duracion) {
+  const barra = document.querySelector(`[data-id="${fileId}"] .progreso-barra`);
+  if (!barra) return;
+  const porcentaje = Math.min((tiempo / duracion) * 100, 100);
+  barra.style.width = `${porcentaje}%`;
+  barra.closest('.progreso-contenedor').classList.remove('oculto');
 }
 
 /* =============================================
@@ -228,14 +298,18 @@ function abrirReproductor(indice, mantenerPantallaCompleta = false) {
   elModal.classList.remove('oculto');
   document.body.style.overflow = 'hidden';
 
-  /* Cuando el video esté listo, reproducir automáticamente.
-     Si venimos de un video anterior en pantalla completa,
-     mantenemos esa pantalla completa sin interrumpir. */
   reproductor.once('ready', () => {
     reproductor.play();
 
-    /* Solo entramos a pantalla completa en la primera apertura manual.
-       Si ya estamos en pantalla completa (cambio automático), no hacemos nada. */
+    /* Retomamos desde donde se dejó, si hay progreso guardado */
+    const progreso = obtenerProgreso(pelicula.id);
+    if (progreso && progreso.tiempo > 0) {
+      reproductor.currentTime = progreso.tiempo;
+    }
+
+    /* Iniciamos el guardado periódico */
+    iniciarGuardadoProgreso();
+
     if (!mantenerPantallaCompleta) {
       reproductor.fullscreen.enter();
     }
@@ -244,23 +318,25 @@ function abrirReproductor(indice, mantenerPantallaCompleta = false) {
 
 /* =============================================
    REPRODUCCIÓN AUTOMÁTICA AL TERMINAR
-   Cuando termina un video, pasa al siguiente.
-   Si era el último, se detiene sin hacer nada.
    ============================================= */
 reproductor.on('ended', () => {
-  const siguiente = indiceActual + 1;
+  /* Guardamos progreso final (100%) al terminar */
+  guardarProgreso();
+  detenerGuardadoProgreso();
 
+  const siguiente = indiceActual + 1;
   if (siguiente < todasLasPeliculas.length) {
-    /* Pasamos true para mantener pantalla completa entre videos */
     abrirReproductor(siguiente, true);
   }
-  /* Si era el último, no hacemos nada — se detiene solo */
 });
 
 /* =============================================
    CERRAR REPRODUCTOR
    ============================================= */
 function cerrarReproductor() {
+  /* Guardamos el progreso al cerrar manualmente */
+  guardarProgreso();
+  detenerGuardadoProgreso();
   reproductor.pause();
   elModal.classList.add('oculto');
   document.body.style.overflow = '';
